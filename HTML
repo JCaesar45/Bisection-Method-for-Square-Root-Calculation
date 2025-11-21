@@ -1,0 +1,43 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Square Root Bisection Visualizer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>🔍 Square Root Bisection Visualizer</h1>
+    <p>Watch the magic of the bisection method as it approximates square roots!</p>
+  </header>
+  
+  <section class="controls">
+    <div class="input-group">
+      <label for="numberInput">Number:</label>
+      <input type="number" id="numberInput" min="0" step="any" placeholder="Enter positive number" />
+    </div>
+    <div class="input-group">
+      <label for="toleranceInput">Tolerance:</label>
+      <input type="number" id="toleranceInput" min="1e-10" step="any" value="1e-7" />
+    </div>
+    <div class="input-group">
+      <label for="maxIterInput">Max Iterations:</label>
+      <input type="number" id="maxIterInput" min="1" step="1" value="100" />
+    </div>
+    <button id="startBtn">Start Visualization 🚀</button>
+    <button id="resetBtn">Reset 🔄</button>
+  </section>
+  
+  <section class="visualization">
+    <canvas id="bisectionCanvas"></canvas>
+  </section>
+  
+  <section class="result">
+    <h2>Result:</h2>
+    <p id="message"></p>
+    <p id="approxRoot"></p>
+  </section>
+  
+  <script src="script.js"></script>
+</body>
+</html>
