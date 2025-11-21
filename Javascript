@@ -1,0 +1,181 @@
+// Select DOM elements
+const canvas = document.getElementById('bisectionCanvas');
+const ctx = canvas.getContext('2d');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const messageEl = document.getElementById('message');
+const approxRootEl = document.getElementById('approxRoot');
+
+const numberInput = document.getElementById('numberInput');
+const toleranceInput = document.getElementById('toleranceInput');
+const maxIterInput = document.getElementById('maxIterInput');
+
+let animationId = null;
+
+// Resize canvas to fit container
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Clear Canvas
+function clearCanvas() {
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+// Draw the number line and bounds
+function drawLine(low, high, guess, target, converged) {
+  clearCanvas();
+
+  const width = canvas.width;
+  const height = canvas.height;
+  const margin = 40;
+
+  // Draw base line
+  ctx.strokeStyle = '#ccc';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+
+  ctx.beginPath();
+  ctx.moveTo(margin, height / 2);
+  ctx.lineTo(width - margin, height / 2);
+  ctx.stroke();
+
+  // Map values to positions
+  const minX = 0;
+  const maxX = Math.max(target, high, low) * 1.2; // extra space
+
+  function mapX(val) {
+    return margin + ((val - minX) / (maxX - minX)) * (width - 2 * margin);
+  }
+
+  // Draw low bound
+  ctx.strokeStyle = '#3498db';
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(mapX(low), height / 2 - 20);
+  ctx.lineTo(mapX(low), height / 2 + 20);
+  ctx.stroke();
+
+  // Draw high bound
+  ctx.strokeStyle = '#e74c3c';
+  ctx.beginPath();
+  ctx.moveTo(mapX(high), height / 2 - 20);
+  ctx.lineTo(mapX(high), height / 2 + 20);
+  ctx.stroke();
+
+  // Draw guess
+  ctx.strokeStyle = '#27ae60';
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.moveTo(mapX(guess), height / 2 - 30);
+  ctx.lineTo(mapX(guess), height / 2 + 30);
+  ctx.stroke();
+
+  // Draw target value (actual square root)
+  ctx.fillStyle = '#8e44ad';
+  ctx.font = 'bold 14px Arial';
+  ctx.fillText(`Target: ${target.toFixed(4)}`, width - margin - 100, 30);
+  ctx.fillText(`Iteration: ${currentIteration}`, width - margin - 120, 50);
+
+  // Highlight current guess
+  if (converged) {
+    ctx.strokeStyle = '#f1c40f';
+    ctx.lineWidth = 12;
+    ctx.beginPath();
+    ctx.arc(mapX(guess), height / 2, 12, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+// Bisection Visualization
+let currentIteration = 0;
+let low, high, guess, squaredGuess, target;
+let tolerance, maxIter;
+let convergedFlag = false;
+let intervalId = null;
+
+function visualizeStep() {
+  // Check for convergence
+  if (Math.abs(high - low) <= tolerance || currentIteration >= maxIter) {
+    let approx = guess;
+    messageEl.textContent = `Approximate square root: ${approx}`;
+    approxRootEl.textContent = `Approximate root: ${approx}`;
+    if (Math.abs(guess * guess - target) > tolerance && currentIteration >= maxIter) {
+      messageEl.textContent = `Failed to converge within ${maxIter} iterations`;
+    }
+    cancelAnimationFrame(intervalId);
+    return;
+  }
+
+  // Calculate new guess
+  guess = (high + low) / 2;
+  squaredGuess = guess * guess;
+
+  // Update bounds
+  if (squaredGuess > target) {
+    high = guess;
+  } else {
+    low = guess;
+  }
+
+  // Draw current step
+  drawLine(low, high, guess, target, false);
+
+  // Increment iteration
+  currentIteration++;
+  intervalId = requestAnimationFrame(visualizeStep);
+}
+
+// Start Button Event
+document.getElementById('startBtn').addEventListener('click', () => {
+  // Reset previous animation
+  if (intervalId) cancelAnimationFrame(intervalId);
+  if (animationId) cancelAnimationFrame(animationId);
+  
+  // Read inputs
+  const num = parseFloat(numberInput.value);
+  tolerance = parseFloat(toleranceInput.value);
+  maxIter = parseInt(maxIterInput.value);
+
+  // Validate input
+  if (isNaN(num) || num < 0) {
+    alert('Please enter a valid non-negative number.');
+    return;
+  }
+
+  // Handle special cases
+  if (num === 0 || num === 1) {
+    messageEl.textContent = `The square root of ${num} is ${num}`;
+    approxRootEl.textContent = `Square root: ${num}`;
+    drawLine(0, 1, num, num, true);
+    return;
+  }
+
+  // Initialize bounds
+  low = 0;
+  high = Math.max(1, num);
+  currentIteration = 0;
+  target = num;
+  convergedFlag = false;
+
+  // Start visualization
+  intervalId = requestAnimationFrame(visualizeStep);
+});
+
+// Reset Button Event
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (intervalId) cancelAnimationFrame(intervalId);
+  if (animationId) cancelAnimationFrame(animationId);
+  clearCanvas();
+  messageEl.textContent = '';
+  approxRootEl.textContent = '';
+});
+
+// Optional: Animate initial static line
+// (Could add animated intro if desired)
